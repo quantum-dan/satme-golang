@@ -13,7 +13,7 @@ import (
 	"github.com/gorilla/mux"
 	// "github.com/gorilla/schema"
 	"net/http"
-	// "html/template"
+	"html/template"
 	"log"
 	// "gopkg.in/mgo.v2"
 	// "gopkg.in/mgo.v2/bson"
@@ -41,5 +41,16 @@ func serve_static(w http.ResponseWriter, r *http.Request) {
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello, world!")
+	t, err := template.ParseFiles("templates/index.html")
+	if err != nil {
+		fmt.Fprintf(w, "Error 404: file not found.  Template could not be parsed.")
+		log.Println("Error: template index.html not found")
+	} else {
+		err = t.Execute(w, "world")
+		if err != nil {
+			fmt.Fprintf(w, "Error 500: Internal server error.")
+			log.Println("Error: template index.html (func index) failed to execute.")
+		}
+	}
 }
+
