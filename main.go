@@ -20,12 +20,17 @@ import (
 	"fmt"
 )
 
-var PORT int = 8080
+type Person struct {
+	Id int
+	Name string
+}
 
 func main() {
+	var PORT int = 8080
 	r := mux.NewRouter()
 	r.HandleFunc("/", index)
 	r.HandleFunc("/static/{file}", serve_static)
+	r.HandleFunc("/tmpl", tmpl_demo)
 	http.Handle("/", r)
 	logstr := fmt.Sprintf("Listening on port %d", PORT)
 	log.Println(logstr)
@@ -38,6 +43,18 @@ func main() {
 
 func serve_static(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "static/" + mux.Vars(r)["file"])
+}
+
+func tmpl_demo(w http.ResponseWriter, r *http.Request) {
+	people := []*Person{ &Person {Id: 0, Name: "Dan"},
+		&Person {Id: 1, Name: "Josh"},
+		}
+	t, _ := template.ParseFiles("templates/demo.html")
+	err := t.Execute(w, people)
+	if err != nil {
+		fmt.Fprintf(w, "Error 500: internal server error")
+		log.Println("Error: Failed to execute template demo.html in function tmpl_demo")
+	}
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
