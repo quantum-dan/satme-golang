@@ -17,4 +17,24 @@ import (
 	"log"
 	// "gopkg.in/mgo.v2"
 	// "gopkg.in/mgo.v2/bson"
+	"fmt"
 )
+
+var PORT int = 8080
+
+func main() {
+	r := mux.NewRouter()
+	r.HandleFunc("/", index)
+	http.Handle("/", r)
+	logstr := fmt.Sprintf("Listening on port %d", PORT)
+	log.Println(logstr)
+	portstr := fmt.Sprintf(":%d", PORT)
+	err := http.ListenAndServe(portstr, nil)
+	if err != nil {
+		log.Fatal("ListenAndServe: ", err)
+	}
+}
+
+func index(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Hello, world!")
+}
