@@ -1,0 +1,2 @@
+#! /bin/sh
+daemon -f -p ./db_pid mongod --dbpath ./db

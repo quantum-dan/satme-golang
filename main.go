@@ -25,6 +25,7 @@ var PORT int = 8080
 func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/", index)
+	r.HandleFunc("/static/{file}", serve_static)
 	http.Handle("/", r)
 	logstr := fmt.Sprintf("Listening on port %d", PORT)
 	log.Println(logstr)
@@ -33,6 +34,10 @@ func main() {
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
+}
+
+func serve_static(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "static/" + mux.Vars(r)["file"])
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
