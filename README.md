@@ -1,6 +1,5 @@
 # satme
 SATme platform.  This version is written in Golang and currently not being used for production.
-Note on the license:  For non-commercial purposes it is unrestricted (MIT base), but in the case of any commercial derivative, source code must be distributed to purchasers (not necessarily to the general public), and it must not have a proprietary license.
 
 ## Why Golang?
 Originally, I'd been planning to use Haskell with the Yesod web framework, and I still have this in mind for the future.  However, Haskell is too complex to achieve proficiency in the short timeframe we're aiming for before initial launch.
@@ -17,9 +16,12 @@ A further advantage, particularly as compared to Haskell, is that I can easily t
 The development environment in use is Golang 1.5 on FreeBSD/amd64.
 
 ## Roadmap
-1. Basics (routing, sessions, form handling)
-2. Database for logins
+1. Basics (routing, sessions, form handling) [DONE]
+2. Database for logins [DONE]
 3. Quiz scores tracking & scholarship matching
 4. School accounts; student accounts associated with school accounts optionally
 5. Counselor tracking of student progress
 6. Addition of MentorNet project (not yet started, another idea of mine) for extra-curricular education.
+
+### Note on Licensing
+For the purpose of general uses the license is an unrestricted open-source license based on the MIT License.  However, in the case of commercial derivatives, source code must be available to purchasers/customers (not necessarily to the general public), and derivatives may not have a proprietary license.
