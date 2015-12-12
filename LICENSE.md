@@ -8,7 +8,7 @@ copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.  No copy or substantial portion
+copies or substantial portions of the Software.  No derivative
 of the Software may be distributed with a proprietary license.  Source code
 must be available to paying customers.
 
