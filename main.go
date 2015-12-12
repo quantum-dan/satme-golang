@@ -8,36 +8,55 @@ package main
 with Goroutines (green threads).  This may or may not be the production version.
 */
 
+/* General Notes:
+* MongoDB from here will NOT work properly with manually-input values.  All data must be inserted via mgo.
+*/
+
 import (
-	// "github.com/gorilla/sessions"
-	"github.com/gorilla/mux"
-	"github.com/gorilla/schema"
-	"net/http"
-	"html/template"
-	"log"
-	// "gopkg.in/mgo.v2"
-	// "gopkg.in/mgo.v2/bson"
-	"fmt"
+	"github.com/gorilla/sessions"	// Used for cookies
+	"github.com/gorilla/mux"	// Routing
+	"github.com/gorilla/schema"	// Reads POST requests into structs
+	"net/http"			// Basic HTTP library
+	"html/template"			// HTML templates
+	"log"				// Logging to the terminal (for debugging)
+	"gopkg.in/mgo.v2"		// MongoDB driver
+	"gopkg.in/mgo.v2/bson"		// Used to convert to BSON for Mongo
+	"fmt"				// fmt is more or less equivalent to stdio in other languages
 )
 
-type Person struct {
+
+var decoder = schema.NewDecoder()								// Decoder struct for form results
+var store = sessions.NewCookieStore([]byte("non-production-a"), []byte("non-production-e"))	// Session store with encryption and authentication keys
+var dbstr = "localhost:27017"									// MongoDB host
+
+type Person struct { // For demo functions
 	Id int
 	Name string
 }
 
-type NameForm struct {
+type NameForm struct { // For demo functions
 	Get bool `schema:"-"`
 	Name string `schema:"name"`
 }
 
+type User struct { // For logging in.
+	Username string `schema:"username"`
+	Password string `schema:"password"`
+	Role string `schema:"role"`
+	Id int `schema:"id"`  // Not generally used beyond the database but will be useful for deleting users.
+}
+
 func main() {
-	var PORT int = 8080
+	var PORT int = 8080 // So it's not hard-coded
 	r := mux.NewRouter()
 	r.HandleFunc("/", index)
 	r.HandleFunc("/static/{file}", serve_static)
 	r.HandleFunc("/tmpl", tmpl_demo)
 	r.HandleFunc("/form_demo", get_form_demo)
 	r.HandleFunc("/form", form_demo)
+	r.HandleFunc("/session", session_demo_get)
+	r.HandleFunc("/session_post", session_demo)
+	r.HandleFunc("/login_post", post_login)
 	http.Handle("/", r)
 	logstr := fmt.Sprintf("Listening on port %d", PORT)
 	log.Println(logstr)
@@ -48,13 +67,125 @@ func main() {
 	}
 }
 
+func post_login(w http.ResponseWriter, r *http.Request) {
+	// Handles login requests.  Currently set up for plaintext passwords.
+	// Does not yet use sessions.  That's the next thing to be added.
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, "failed to parse form", 500)
+	} else {
+		result := new(User)
+		err = decoder.Decode(result, r.PostForm)
+		if err != nil {
+			http.Error(w, "failed to read form", 500)
+		} else {
+			dbsession, err := mgo.Dial(dbstr)
+			defer dbsession.Close()
+			if err != nil {
+				http.Error(w, "failed to connect to database", 500)
+			} else {
+				c := dbsession.DB("server").C("users")
+				dbresult := new(User)
+				err = c.Find(bson.M{ "username": result.Username }).One(&dbresult)
+				if err != nil  && err.Error() != "not found" {
+					http.Error(w, "failed to read database", 500)
+				} else {
+					if dbresult.Username == result.Username && dbresult.Password == result.Password {
+						fmt.Fprintf(w, "Successfully logged in as " + dbresult.Username)
+					} else {
+						fmt.Fprintf(w, "Failed to log in")
+					}
+				}
+			}
+		}
+	}
+}
+
+func dbtest() {
+	// Database test function (not in use)
+	dbsession, err := mgo.Dial("localhost:27017")
+	if err != nil {
+		log.Fatal("Database failed to connect")
+	}
+	defer dbsession.Close()
+	c := dbsession.DB("test").C("people")
+	err = c.Insert(&Person {0, "Daniel Philippus"},
+		&Person {1, "Nour Haridy"})
+	if err != nil {
+		log.Fatal(err)
+	}
+	result := new(Person)
+	err = c.Find(bson.M{"name": "Daniel Philippus"}).One(&result)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Name: ", result.Name)
+	err = c.Find(bson.M{"id": 1}).One(&result)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Name: ", result.Name)
+}
+
+func session_demo(w http.ResponseWriter, r *http.Request) {
+	// Session demo for a fake login
+	type Login struct {
+		Username string `schema:"username"`
+		Password string `schema:"password"`
+	}
+	err := r.ParseForm()
+	if err != nil {
+		fmt.Fprintf(w, "Error 500: internal server error.  Failed to parse form.")
+		log.Println("Error parsing form in session_demo")
+	} else {
+		results := new(Login)
+		err = decoder.Decode(results, r.PostForm)
+		if err != nil {
+			fmt.Fprintf(w, "Error 500: internal server error.  Failed to evaluate form.")
+			log.Println("Error evaluating form in session_demo")
+		} else {
+			if results.Username == "dan" && results.Password == "password" {
+				session, err := store.Get(r, "login")
+				if err != nil {
+					http.Error(w, err.Error(), 500)
+					log.Println("Error retrieving session in session_demo")
+				} else {
+					session.Values["user"] = "dan"
+					session.Save(r, w)
+					t, _ := template.ParseFiles("templates/login_demo.html")
+					t.Execute(w, "You are successfully logged in as dan")
+				}
+			} else {
+				t, _ := template.ParseFiles("templates/login_demo.html")
+				t.Execute(w, "You failed to log in")
+			}
+		}
+	}
+}
+
+func session_demo_get(w http.ResponseWriter, r *http.Request) {
+	// Displays session results
+	session, err := store.Get(r, "login")
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+	} else {
+		if name, ok := session.Values["user"]; ok {
+			t, _ := template.ParseFiles("templates/login_demo.html")
+			t.Execute(w, "You are logged in as " + name.(string))
+		} else {
+			t, _ := template.ParseFiles("templates/login_demo.html")
+			t.Execute(w, "You are not logged in.")
+		}
+	}
+}
+
 func form_demo(w http.ResponseWriter, r *http.Request) {
+	// Demos form handling with schema
 	err := r.ParseForm()
 	if err != nil {
 		fmt.Fprintf(w, "Error 500: internal server error.  Failed to parse form.")
 		log.Println("Error parsing form in form_demo")
 	} else {
-		decoder := schema.NewDecoder()
 		results := new(NameForm)
 		err = decoder.Decode(results, r.PostForm)
 		if err != nil {
@@ -73,6 +204,7 @@ func form_demo(w http.ResponseWriter, r *http.Request) {
 }
 
 func get_form_demo(w http.ResponseWriter, r *http.Request) {
+	// Form for form test
 	val := NameForm{Get: true, Name: ""}
 	t, _ := template.ParseFiles("templates/form.html")
 	err := t.Execute(w, val)
@@ -80,13 +212,15 @@ func get_form_demo(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Error 500: internal server error.  Failed to execute template.")
 		log.Println("Failed to execute template in get_form_demo")
 	}
-} 
+}
 
 func serve_static(w http.ResponseWriter, r *http.Request) {
+	// Static file server
 	http.ServeFile(w, r, "static/" + mux.Vars(r)["file"])
 }
 
 func tmpl_demo(w http.ResponseWriter, r *http.Request) {
+	// Demos HTML templates
 	people := []*Person{ &Person {Id: 0, Name: "Dan"},
 		&Person {Id: 1, Name: "Josh"},
 		}
@@ -99,6 +233,7 @@ func tmpl_demo(w http.ResponseWriter, r *http.Request) {
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
+	// Index function
 	t, err := template.ParseFiles("templates/index.html")
 	if err != nil {
 		fmt.Fprintf(w, "Error 404: file not found.  Template could not be parsed.")
