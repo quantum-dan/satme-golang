@@ -27,7 +27,7 @@ The development environment in use is Golang 1.5 on FreeBSD/amd64.
 ## Documentation for Libraries
 Documentation for the libraries used:
 * bcrypt (password hashing): https://godoc.org/golang.org/x/crypto/bcrypt
-* Gorilla (web toolkit): gorillatoolkit.org
+* Gorilla (web toolkit): http://www.gorillatoolkit.org/
 * mgo (MongoDB driver): https://labix.org/mgo
 
 ### Note on Licensing
