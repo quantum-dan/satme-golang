@@ -23,6 +23,7 @@ import (
 	"gopkg.in/mgo.v2/bson"		// Used to convert to BSON for Mongo
 	"fmt"				// fmt is more or less equivalent to stdio in other languages
 	"golang.org/x/crypto/bcrypt"	// Secure password hashing, more secure for passwords than SHA3
+	"time"
 )
 
 
@@ -184,6 +185,7 @@ func post_login(w http.ResponseWriter, r *http.Request) {
 						session.Save(r, w)
 						http.Redirect(w, r, "/login_get", 302)
 					} else {
+						time.Sleep(time.Second) // Prevents brute-force attacks.  Between this and bcrypt, we should be able to allow weak passwords with relative safety.
 						fmt.Fprintf(w, "Failed to log in")
 					}
 				}
