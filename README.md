@@ -16,9 +16,19 @@ A further advantage, particularly as compared to Haskell, is that I can easily t
 The development environment in use is Golang 1.5 on FreeBSD/amd64.
 
 ## Roadmap
-1. Basics (routing, sessions, form handling)
-2. Database for logins
+1. Basics (routing, sessions, form handling) [DONE]
+2. Database for logins [DONE]
 3. Quiz scores tracking & scholarship matching
 4. School accounts; student accounts associated with school accounts optionally
 5. Counselor tracking of student progress
 6. Addition of MentorNet project (not yet started, another idea of mine) for extra-curricular education.
+7. 
+
+## Documentation for Libraries
+Documentation for the libraries used:
+* bcrypt (password hashing): https://godoc.org/golang.org/x/crypto/bcrypt
+* Gorilla (web toolkit): http://www.gorillatoolkit.org/
+* mgo (MongoDB driver): https://labix.org/mgo
+
+### Note on Licensing
+For the purpose of general uses the license is an unrestricted open-source license based on the MIT License.  However, in the case of commercial derivatives, source code must be available to purchasers/customers (not necessarily to the general public), and derivatives may not have a proprietary license.
