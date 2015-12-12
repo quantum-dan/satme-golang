@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Geek Page</title>
+	<link rel="stylesheet" type="text/css" href="/static/geek.css" />
+	<script src="/static/geek.js"></script>
+</head>
+<body>
+	<h2 class="header">Welcome to the Geek Page!</h2>
+	<p class="header">This page is here to explain the technologies involved in SATme to students interested in software engineering.</p>
+	<p class="header"><a href="/">Home</a></p>
+	<hr height=10 border=none color=#00AF00 />
+	<div class="main">
+	<p>So, you're interested in software, eh?  Great!  Here's the tour of our technical details.  At the end I'll point you to some useful resources--I've been in your shoes not too long ago, and I know it can be difficult to figure out where and how to start.  I will throw around some technical terms here; if you don't know them, consider this practice in Googling about programming.  We all do plenty of that.</p>
+	<p>Our server is written using the <b>Go</b> programming language.  Why?
+	<ul>
+	<li>Golang uses something called goroutines for concurrency.  These are lighter-weight than other languages' threads, which means we can handle multiple requests with ease.  Haskell does something similar, and Node.JS is built in such a way that it doesn't need multithreading.  This is a large part of all three languages' value for server-side programming.</li>
+	<li>Golang, as a compiled and statically-typed language, is more performant and less error-prone than dynamically-typed, interpreted languages, such as Node.JS.</li>
+	<li>Golang is designed for simplicity, so we can easily implement things.</li>
+	<li>Golang has an excellent selection of server-related libraries, which makes life easy for us not needing to hunt around for the right tool for the job (more on that later).</li>
+	</ul>
+	In short, you could almost say Golang was designed for this, and you'd be right.  Golang came out of Google and was designed for Google, which means it was designed with server-side programming in mind.</p>
+	<p>We use the <b>MongoDB</b> database.  Why?
+	<ul>
+	<li>MongoDB performs better with lots of write requests than SQL.</li>
+	<li>MongoDB is easier to administer.</li>
+	</ul>
+	Mongo does have the disadvantage of being moderately less reliable in the event of a crash, but that only matters if you're working with data where losing a single piece could be catastrophic.  That's not the case here.</p>
+	<p>Our servers run on <b>FreeBSD</b>.  Why?
+	<ul>
+	<li>FreeBSD is legendary for its stability, with many such servers having years of continuous uptime.</li>
+	<li>FreeBSD has a very stable and mature codebase, which means very few bugs and overall good security.</li>
+	<li>FreeBSD is generally easier to administer than GNU/Linux, as it sticks more tightly to the Unix way of doing things.</li>
+	<li>FreeBSD tends to perform very well.  Its TCP stack in particular is known for being high-quality and high-performance.</li>
+	<li>The FreeBSD community is not ideologically-driven, which means you don't get the related conflicts as you would with Linux's free software crusaders.</li>
+	</ul>
+	In short, FreeBSD is an excellent choice for engineers and sysadmins.  I happen to fill both roles at SATme, so it was a natural choice.</p>
+	<p>We use the following technologies within our application:
+	<ul>
+	<li>Golang's <b>Gorilla Toolkit</b> for the server-related stuff like routing, sessions and form handling (<b>mux</b>, <b>sessions</b> and <b>schema</b>, respectively).  Gorilla is simple and modular--a toolkit, not a framework--which means it's easy to work with and easy to interoperate with other libraries.</li>
+	<li>Golang's <b>MGO</b> MongoDB driver.  It's simple and easy to work with and lets us use structs directly as inputs when we're inserting data.</li>
+	<li>The <b>bcrypt</b> password hashing algorithm to encrypt passwords.  This is built on the <b>Blowfish</b> encryption algorithm.  Specifically designed for passwords, bcrypt is not only one-way encryption, it's also slow (which is good in this case).  This means an attacker who accesses our database can't decrypt the passwords stored, but instead has to brute-force them, which is a slow process here, much slower than SHA hashes.  If you noticed the wait of a few seconds when creating an account, that's the time it takes to encrypt your password.  The plaintext version isn't stored anywhere--when you log in, we hash the password you enter and check it against our stored hash, not the other way around.</li>
+	<li>Golang's <b>html/template</b> standard templating library to generate dynamic HTML.  This is simple and easy to work with, and we can do things like embedding if statements to use the same page for multiple purposes.  Notice how the create account page shows different content for newly opened, success and failure?  That's all the same template with a couple if statements thrown in.</li>
+	</ul>
+	</p>
+	</div>
+	<div class="resources">
+	<p>So, how do you learn to do this yourself?  Well, if you want to create something like what we have here:
+	<ul>
+	<li>There is a basic Golang tutorial at <a href="https://golang.org">Golang.org</a></li>
+	<li><a href="http://www.gorillatoolkit.org">Gorillatoolkit.org</a> has introductions for all of its packages.</li>
+	<li><a href="https://labix.org/mgo">MGO's homepage</a> likewise has an introduction.</li>
+	<li><a href="https://mongodb.org">The MongoDB homepage</a> has details about MongoDB.</li>
+	<li><a href="https://freebsd.org">FreeBSD</a> has wonderful documentation under the documentation tab.  Specifically check out the handbook and the developers' handbook at <a href="https://www.freebsd.org/doc/en_US.ISO8859-1/books/">the FreeBSD books page</a> (they're digital and free).</li>
+	</ul>
+	With a bit of effort and sufficient interest, you can ultimately build sites like this one and far beyond using those resources.  If you need something to compare your progress to, check out the <a href="https://github.com/quantum-dan/satme">source code</a> for SATme.  You can even build your software with ours as a basis, as long as the result is likewise open-source.</p>
+	</div>
+</body>
+</html>

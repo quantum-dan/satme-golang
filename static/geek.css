@@ -1,0 +1,13 @@
+body, hr {
+	background-color: #000000;
+	color: #00AF00;
+}
+
+.header {
+	display: block;
+	text-align: center;
+}
+
+b {
+	color: #AAAAAA;
+}
