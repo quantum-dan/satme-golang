@@ -1,5 +1,6 @@
 # satme
 SATme platform.  This version is written in Golang and currently not being used for production.
+Note on the license:  For non-commercial purposes it is unrestricted (MIT base), but in the case of any commercial derivative, source code must be distributed to purchasers (not necessarily to the general public), and it must not have a proprietary license.
 
 ## Why Golang?
 Originally, I'd been planning to use Haskell with the Yesod web framework, and I still have this in mind for the future.  However, Haskell is too complex to achieve proficiency in the short timeframe we're aiming for before initial launch.
