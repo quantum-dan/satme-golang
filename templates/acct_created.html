@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Account Creation</title>
+</head>
+<body>
+{{if (not .Success) or (not .Execute)}}
+	<p>Create an Account:</p>
+	<div><form method=POST action="/create_acct">
+		<input type=text name="username" placeholder="Username" />
+		<input type=text name="password" placeholder="Password" />
+		<input type=submit value="Create Account" />
+	</form></div>
+{{else}}
+	{{if .Success}}
+		<p>Successfully created account with username {{.Username}} and role {{.Role}}.</p>
+	{{else}}
+		<p>Failed to create account: username {{.Username}} already exists.</p>
+	{{end}}
+{{end}}
+	<p><a href="/">Home</a></p>
+</body>
+</html>

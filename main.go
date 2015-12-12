@@ -22,6 +22,7 @@ import (
 	"gopkg.in/mgo.v2"		// MongoDB driver
 	"gopkg.in/mgo.v2/bson"		// Used to convert to BSON for Mongo
 	"fmt"				// fmt is more or less equivalent to stdio in other languages
+	"golang.org/x/crypto/bcrypt"	// Secure password hashing, more secure for passwords than SHA3
 )
 
 
@@ -46,6 +47,20 @@ type User struct { // For logging in.
 	Id int `schema:"id"`  // Not generally used beyond the database but will be useful for deleting users.
 }
 
+type DbUser struct { // Uses []byte password
+	Username string
+	Password []byte
+	Role string
+	Id int
+}
+
+type SuccessLogin struct {
+	Success bool
+	Username string
+	Role string
+	Execute bool
+}
+
 func main() {
 	var PORT int = 8080 // So it's not hard-coded
 	r := mux.NewRouter()
@@ -57,6 +72,9 @@ func main() {
 	r.HandleFunc("/session", session_demo_get)
 	r.HandleFunc("/session_post", session_demo)
 	r.HandleFunc("/login_post", post_login)
+	r.HandleFunc("/login_get", get_login)
+	r.HandleFunc("/create_acct_get", create_account_get)
+	r.HandleFunc("/create_acct", create_account_post)
 	http.Handle("/", r)
 	logstr := fmt.Sprintf("Listening on port %d", PORT)
 	log.Println(logstr)
@@ -64,6 +82,72 @@ func main() {
 	err := http.ListenAndServe(portstr, nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
+	}
+}
+
+func create_account_get(w http.ResponseWriter, r *http.Request) {
+	t, err := template.ParseFiles("templates/acct_created.html")
+	err = t.Execute(w, SuccessLogin{ false, "", "", false})
+	if err != nil {
+		http.Error(w, "failed to execute template", 500)
+	}
+}
+
+func create_account_post(w http.ResponseWriter, r *http.Request) {
+	// Creates an account from a post request.  Password is hashed with bcrypt.
+	// If the request originator is logged in as an admin, role is set to the form value.  Otherwise, role is set to user.
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, "failed to parse form", 500)
+	} else {
+		result := new(User)
+		err = decoder.Decode(result, r.PostForm)
+		if err != nil {
+			http.Error(w, "failed to read form", 500)
+		} else {
+			session, err := store.Get(r, "login")
+			if err != nil {
+				http.Error(w, "internal server error", 500)
+			} else {
+				if role, ok := session.Values["role"]; !ok || role.(string) != "admin" {
+					// Not logged in as admin: sets role to user
+					result.Role = "user"
+				}
+				db, err := mgo.Dial(dbstr)
+				defer db.Close()
+				if err != nil {
+					http.Error(w, "failed to access database", 500)
+				} else {
+					c := db.DB("server").C("users")
+					dbresult := new(User)
+					err = c.Find(bson.M{"username": result.Username}).One(&dbresult)
+					if err != nil && err.Error() != "not found" {
+						http.Error(w, "failed to read database", 500)
+					} else if err == nil {
+						// Result is found: account with that username already exists
+						returning := SuccessLogin { false, result.Username, "", true }
+						t, _ := template.ParseFiles("templates/acct_created.html")
+						err = t.Execute(w, returning)
+						if err != nil {
+							http.Error(w, "failed to execute template", 500)
+						}
+					} else {
+						password_bytestr, _ := bcrypt.GenerateFromPassword([]byte(result.Password), 10) // Note here: do NOT use a larger cost, it will (noticeably on the other end) take a very long time
+						result.Password = string(password_bytestr)
+						err = c.Insert(&result)
+						if err != nil {
+							http.Error(w, "failed to create account", 500)
+						} else {
+							t, _ := template.ParseFiles("templates/acct_created.html")
+							err = t.Execute(w, SuccessLogin { true, result.Username, result.Role, true })
+							if err != nil {
+								http.Error(w, "failed to execute template", 500)
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -85,19 +169,41 @@ func post_login(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "failed to connect to database", 500)
 			} else {
 				c := dbsession.DB("server").C("users")
-				dbresult := new(User)
+				dbresult := new(DbUser)
 				err = c.Find(bson.M{ "username": result.Username }).One(&dbresult)
 				if err != nil  && err.Error() != "not found" {
 					http.Error(w, "failed to read database", 500)
 				} else {
-					if dbresult.Username == result.Username && dbresult.Password == result.Password {
-						fmt.Fprintf(w, "Successfully logged in as " + dbresult.Username)
+					if dbresult.Username == result.Username && bcrypt.CompareHashAndPassword(dbresult.Password, []byte(result.Password)) == nil {
+						session, err := store.Get(r, "login")
+						if err != nil {
+							http.Error(w, "Failed to retrieve session", 500)
+						}
+						session.Values["username"] = dbresult.Username
+						session.Values["role"] = dbresult.Role
+						session.Save(r, w)
+						http.Redirect(w, r, "/login_get", 302)
 					} else {
 						fmt.Fprintf(w, "Failed to log in")
 					}
 				}
 			}
 		}
+	}
+}
+
+func get_login(w http.ResponseWriter, r *http.Request) {
+	// Retrieves login session
+	session, err := store.Get(r, "login")
+	if err != nil {
+		http.Error(w, "Failed to retrieve session", 500)
+	}
+	username, ok := session.Values["username"]
+	role, role_ok := session.Values["role"]
+	if ok && role_ok {
+		fmt.Fprintf(w, "You are logged in as " + username.(string) + ", and your role is " + role.(string)) // Unsafe if username, role are not strings
+	} else {
+		fmt.Fprintf(w, "You are not logged in.")
 	}
 }
 
