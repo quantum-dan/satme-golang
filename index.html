@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>SATme by quantum-dan</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-dark.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="stylesheets/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  </head>
+  <body>
+      <div id="header">
+        <nav>
+          <li class="fork"><a href="https://github.com/quantum-dan/satme">View On GitHub</a></li>
+          <li class="downloads"><a href="https://github.com/quantum-dan/satme/zipball/master">ZIP</a></li>
+          <li class="downloads"><a href="https://github.com/quantum-dan/satme/tarball/master">TAR</a></li>
+          <li class="title">DOWNLOADS</li>
+        </nav>
+      </div><!-- end header -->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>SATme</h1>
+          <p>The SATme education platform for test preparation and finding scholarships.</p>
+          <hr>
+          <span class="credits left">Project maintained by <a href="https://github.com/quantum-dan">quantum-dan</a></span>
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></span>
+        </div>
+
+        <h1>
+<a id="welcome-to-satme" class="anchor" href="#welcome-to-satme" aria-hidden="true"><span class="octicon octicon-link"></span></a>Welcome to SATme!</h1>
+
+<p>SATme is a new platform designed to help students get into the college they want with the scholarships they need.</p>
+
+<h2>
+<a id="how-does-it-work" class="anchor" href="#how-does-it-work" aria-hidden="true"><span class="octicon octicon-link"></span></a>How does it work?</h2>
+
+<h3>
+<a id="for-the-student" class="anchor" href="#for-the-student" aria-hidden="true"><span class="octicon octicon-link"></span></a>For the student:</h3>
+
+<ol>
+<li>Create an account and log in.</li>
+<li>Take one of our practice SAT or ACT tests.  This will predict a score on the real thing and store it for you.</li>
+<li>Head over to the Scholarships page.  You'll be asked for some demographic data (optional, and we won't share it with anyone else), and then we'll match you with any scholarships you're eligible for.  They will be marked as "Eligible" or "Highly Eligible", depending on how closely your data matches their criteria.  You will also be informed of scholarships which are just beyond your current scores, so you know what you'll get if you improve.</li>
+<li>Head over to the Test Prep section and we can give you tips on how to improve your score.  We'll point out your weakest areas and give you specific pointers, as well as general advice like how to keep calm for the test.</li>
+</ol>
+
+<h3>
+<a id="for-the-school" class="anchor" href="#for-the-school" aria-hidden="true"><span class="octicon octicon-link"></span></a>For the school:</h3>
+
+<ol>
+<li>Create a school account and invite your students to create accounts with your school.</li>
+<li>As your students use our service, you can view their progress.</li>
+<li>We'll help you identify the students who need the most help so you can focus your efforts where they'll be most useful.</li>
+</ol>
+
+<h2>
+<a id="hey-geeks" class="anchor" href="#hey-geeks" aria-hidden="true"><span class="octicon octicon-link"></span></a>Hey, geeks!</h2>
+
+<p>So, you're a budding computer geek, eh?  Well, it just so happens that you can study the inner workings of SATme if you'd like.  The source code is available at <a href="https://github.com/quantum-dan/satme">our GitHub page</a>.  Here's how we built it:</p>
+
+<ul>
+<li>The programming language used on the backend is <a href="https://golang.org/">Golang</a>.  It's simple and easy to work with, and has excellent libraries and toolkits for writing server-side code.  That is, after all, what it's designed for.</li>
+<li>We're using <a href="https://www.mongodb.org/">MongoDB</a> for a database.  MongoDB is easier to scale and faster to write than SQL, as well as being easier to administer.  The tradeoff is that it's less safe in the event of a crash or similar, but that doesn't usually matter unless any single database interaction is of enormous value, which is not the case for us.</li>
+<li>Our server-side toolkit is the <a href="http://gorillatoolkit.org">Gorilla Toolkit</a>.  It's simple and modular, which makes life easy for us in terms of learning to use it and integrating with other libraries and tools.</li>
+<li>We use the <a href="https://labix.org/mgo">MGO</a> MongoDB driver.  This is likewise simple and easy to use.</li>
+<li>Passwords are hashed with bcrypt, which uses the Blowfish algorithm.  bcrypt is designed specifically for passwords, with irreversible encryption like the SHA and MD5 checksum algorithms.  It has one further edge, though: it's very slow (our first version using it took easily a minute or so to hash a password, so we had to use a lower time cost).  These two factors mean that anyone who got their hands on our database couldn't decrypt the passwords, but would have to brute-force them, and that would take a long time--hashing still takes a few seconds even with the reduced cost.</li>
+<li>We use the Go standard library's html/templates to generate dynamic HTML.  This lets us do things like embed if statements in HTML templates so we can use the same templates for multiple purposes.  For example, the Account Creation template will either display the form or inform you of success, depending on the data passed to it.</li>
+</ul>
+      </section>
+
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
+  </body>
+</html>
