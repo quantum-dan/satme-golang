@@ -10,6 +10,7 @@ with Goroutines (green threads).  This may or may not be the production version.
 
 /* General Notes:
 * MongoDB from here will NOT work properly with manually-input values.  All data must be inserted via mgo.
+* The commented-out code is from testing the functionality and is no longer of use.
 */
 
 import (
@@ -26,11 +27,16 @@ import (
 	"time"
 )
 
+/* START VARIABLE DECLARATIONS */
 
 var decoder = schema.NewDecoder()								// Decoder struct for form results
 var store = sessions.NewCookieStore([]byte("non-production-a"), []byte("non-production-e"))	// Session store with encryption and authentication keys
 var dbstr = "localhost:27017"									// MongoDB host
 
+/* END VARIABLE DECLARATIONS */
+/* START STRUCT DECLARATIONS */
+
+/* no longer in use 
 type Person struct { // For demo functions
 	Id int
 	Name string
@@ -40,6 +46,7 @@ type NameForm struct { // For demo functions
 	Get bool `schema:"-"`
 	Name string `schema:"name"`
 }
+ end no longer in use */
 
 type User struct { // For logging in.
 	Username string `schema:"username"`
@@ -55,23 +62,35 @@ type DbUser struct { // Uses []byte password
 	Id int
 }
 
-type SuccessLogin struct {
+type SuccessLogin struct { // Used to pass information to Create Account
 	Success bool
 	Username string
 	Role string
 	Execute bool
 }
 
+type Question struct { // Quiz question
+	Question string `schema:"question"`
+	Answers []string `schema:"answers"`
+	AnswerChosen string `schema:"answer"`
+	CorrectIndex int `schema:"correct"`
+	Id string `schema:"id"`
+}
+
+type Quiz struct { // Quiz
+	Title string `schema:"title"`
+	Id string `schema:"id"`
+	Questions []Question `schema:"-"`
+}
+
+/* END STRUCT DECLARATIONS */
+/* START MAIN FUNCTION */
+
 func main() {
 	var PORT int = 8080 // So it's not hard-coded
 	r := mux.NewRouter()
 	r.HandleFunc("/", index)
 	r.HandleFunc("/static/{file}", serve_static)
-	r.HandleFunc("/tmpl", tmpl_demo)
-	r.HandleFunc("/form_demo", get_form_demo)
-	r.HandleFunc("/form", form_demo)
-	r.HandleFunc("/session", session_demo_get)
-	r.HandleFunc("/session_post", session_demo)
 	r.HandleFunc("/login_post", post_login)
 	r.HandleFunc("/login_get", get_login)
 	r.HandleFunc("/create_acct_get", create_account_get)
@@ -83,6 +102,93 @@ func main() {
 	err := http.ListenAndServe(portstr, nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
+	}
+}
+
+/* END MAIN FUNCTION */
+/* START GENERAL FUNCTIONS */
+
+func retrieve_quiz(target string) (Quiz, error) {
+	// Retrieves quiz with the given ID
+	db, err := mgo.Dial(dbstr)
+	defer db.Close()
+	if err != nil {
+		return *new(Quiz), err
+	}
+	c := db.DB("server").C("quiz")
+	result := new(Quiz)
+	err = c.Find(bson.M{"_id": bson.ObjectId(target)}).One(&result)
+	if err != nil {
+		return *new(Quiz), err
+	}
+	return *result, nil
+}
+
+func retrieve_quizzes(title string) ([]Quiz, error) {
+	// Retrieves all quizes from the database
+	db, err := mgo.Dial(dbstr)
+	defer db.Close()
+	if err != nil {
+		return []Quiz{}, err
+	}
+	c := db.DB("server").C("quiz")
+	var dbresult *mgo.Iter
+	if title != "" {
+		dbresult = c.Find(bson.M{"title": title}).Limit(10).Iter()
+	} else {
+		dbresult = c.Find(nil).Limit(10).Iter()
+	}
+	var result []Quiz
+	err = dbresult.All(&result)
+	if err != nil {
+		return []Quiz{}, err
+	}
+	return result, nil
+}
+
+func (quiz Quiz) Grade() (float32, error) {
+	// Grades a quiz
+	db, err := mgo.Dial(dbstr)
+	defer db.Close()
+	if err != nil {
+		return 0.0, err
+	}
+	c := db.DB("server").C("quiz")
+	compare := new(Quiz)
+	err = c.Find(bson.M{"_id": bson.ObjectId(quiz.Id)}).One(&compare)
+	if err != nil {
+		return 0.0, err
+	}
+	var sum float32 = 0.0
+	var total float32 = float32(len(quiz.Questions))
+	for i := 0; i < len(quiz.Questions); i++ {
+		if quiz.Questions[i].AnswerChosen == compare.Questions[i].Answers[compare.Questions[i].CorrectIndex] {
+			sum += 1.0
+		}
+	}
+	return sum * 100 / total, nil
+}
+
+/* END GENERAL FUNCTIONS */
+/* START ROUTING FUNCTIONS */
+
+func serve_static(w http.ResponseWriter, r *http.Request) {
+	// Static file server
+	http.ServeFile(w, r, "static/" + mux.Vars(r)["file"])
+}
+
+func index(w http.ResponseWriter, r *http.Request) {
+	// Index function
+	t, err := template.ParseFiles("templates/index.html")
+	if err != nil {
+		fmt.Fprintf(w, "Error 404: file not found.  Template could not be parsed.")
+		log.Println("Error: template index.html not found")
+	} else {
+		err = t.Execute(w, "world")
+		if err != nil {
+			fmt.Fprintf(w, "Error 500: Internal server error.")
+			log.Println("Error: template index.html (func index) failed to execute.")
+		}
 	}
 }
 
@@ -209,7 +315,9 @@ func get_login(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func dbtest() {
+/* END ROUTING FUNCTIONS */
+
+/* func dbtest() {
 	// Database test function (not in use)
 	dbsession, err := mgo.Dial("localhost:27017")
 	if err != nil {
@@ -320,13 +428,9 @@ func get_form_demo(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Error 500: internal server error.  Failed to execute template.")
 		log.Println("Failed to execute template in get_form_demo")
 	}
-}
+}*/
 
-func serve_static(w http.ResponseWriter, r *http.Request) {
-	// Static file server
-	http.ServeFile(w, r, "static/" + mux.Vars(r)["file"])
-}
-
+/*
 func tmpl_demo(w http.ResponseWriter, r *http.Request) {
 	// Demos HTML templates
 	people := []*Person{ &Person {Id: 0, Name: "Dan"},
@@ -338,20 +442,6 @@ func tmpl_demo(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Error 500: internal server error")
 		log.Println("Error: Failed to execute template demo.html in function tmpl_demo")
 	}
-}
+}*/
 
-func index(w http.ResponseWriter, r *http.Request) {
-	// Index function
-	t, err := template.ParseFiles("templates/index.html")
-	if err != nil {
-		fmt.Fprintf(w, "Error 404: file not found.  Template could not be parsed.")
-		log.Println("Error: template index.html not found")
-	} else {
-		err = t.Execute(w, "world")
-		if err != nil {
-			fmt.Fprintf(w, "Error 500: Internal server error.")
-			log.Println("Error: template index.html (func index) failed to execute.")
-		}
-	}
-}
 
