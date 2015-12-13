@@ -10,7 +10,7 @@ with Goroutines (green threads).  This may or may not be the production version.
 
 /* General Notes:
 * MongoDB from here will NOT work properly with manually-input values.  All data must be inserted via mgo.
-* The commented-out code is from testing the functionality and is no longer of use.
+* The commented-out code is from testing the functionality and is no longer of use.  I've left it in in case someone needs a reference for how the concepts used here work.
 */
 
 import (
@@ -25,6 +25,7 @@ import (
 	"fmt"				// fmt is more or less equivalent to stdio in other languages
 	"golang.org/x/crypto/bcrypt"	// Secure password hashing, more secure for passwords than SHA3
 	"time"
+	"errors"
 )
 
 /* START VARIABLE DECLARATIONS */
@@ -124,6 +125,17 @@ func retrieve_quiz(target string) (Quiz, error) {
 	return *result, nil
 }
 
+func insert_quiz(quiz Quiz) error {
+	db, err := mgo.Dial(dbstr)
+	defer db.Close()
+	if err != nil {
+		return err
+	}
+	c := db.DB("server").C("quiz")
+	err = c.Insert(&quiz)
+	return err
+}
+
 func retrieve_quizzes(title string) ([]Quiz, error) {
 	// Retrieves all quizes from the database
 	db, err := mgo.Dial(dbstr)
@@ -167,6 +179,27 @@ func (quiz Quiz) Grade() (float32, error) {
 		}
 	}
 	return sum * 100 / total, nil
+}
+
+func create_account(user User) error {
+	db, err := mgo.Dial(dbstr)
+	defer db.Close()
+	if err != nil {
+		return err
+	}
+	c := db.DB("server").C("users")
+	result := new(User)
+	err = c.Find(bson.M{"username": user.Username}).One(&result)
+	if err != nil && err.Error() != "not found" {
+		return err
+	} else if err == nil {
+		return errors.New("user already exists")
+	} else {
+		password_bytestr, err := bcrypt.GenerateFromPassword([]byte(user.Password), 20) // Note: excessive costs may cause unreasonable delays on the client-side while the password is hashed server-side.
+		user.Password = string(password_bytestr)
+		err = c.Insert(&user)
+		return err
+	}
 }
 
 /* END GENERAL FUNCTIONS */
@@ -220,37 +253,19 @@ func create_account_post(w http.ResponseWriter, r *http.Request) {
 					// Not logged in as admin: sets role to user
 					result.Role = "user"
 				}
-				db, err := mgo.Dial(dbstr)
-				defer db.Close()
-				if err != nil {
-					http.Error(w, "failed to access database", 500)
+				t, _ := template.ParseFiles("templates/acct_created.html")
+				err = create_account(*result)
+				if err != nil && err.Error() == "user already exists" {
+					err = t.Execute(w, SuccessLogin{false, result.Username, "", true})
+					if err != nil {
+						http.Error(w, "failed to execute template", 500)
+					}
+				} else if err != nil {
+					http.Error(w, "internal server error", 500)
 				} else {
-					c := db.DB("server").C("users")
-					dbresult := new(User)
-					err = c.Find(bson.M{"username": result.Username}).One(&dbresult)
-					if err != nil && err.Error() != "not found" {
-						http.Error(w, "failed to read database", 500)
-					} else if err == nil {
-						// Result is found: account with that username already exists
-						returning := SuccessLogin { false, result.Username, "", true }
-						t, _ := template.ParseFiles("templates/acct_created.html")
-						err = t.Execute(w, returning)
-						if err != nil {
-							http.Error(w, "failed to execute template", 500)
-						}
-					} else {
-						password_bytestr, _ := bcrypt.GenerateFromPassword([]byte(result.Password), 10) // Note here: do NOT use a larger cost, it will (noticeably on the other end) take a very long time
-						result.Password = string(password_bytestr)
-						err = c.Insert(&result)
-						if err != nil {
-							http.Error(w, "failed to create account", 500)
-						} else {
-							t, _ := template.ParseFiles("templates/acct_created.html")
-							err = t.Execute(w, SuccessLogin { true, result.Username, result.Role, true })
-							if err != nil {
-								http.Error(w, "failed to execute template", 500)
-							}
-						}
+					err = t.Execute(w, SuccessLogin{true, result.Username, result.Role, true})
+					if err != nil {
+						http.Error(w, "failed to execute template", 500)
 					}
 				}
 			}
