@@ -195,10 +195,32 @@ func create_account(user User) error {
 	} else if err == nil {
 		return errors.New("user already exists")
 	} else {
-		password_bytestr, err := bcrypt.GenerateFromPassword([]byte(user.Password), 20) // Note: excessive costs may cause unreasonable delays on the client-side while the password is hashed server-side.
+		password_bytestr, err := bcrypt.GenerateFromPassword([]byte(user.Password), 15) // Note: excessive costs may cause unreasonable delays on the client-side while the password is hashed server-side.  15 is reasonable (3-5 seconds), 20 is excessive.
 		user.Password = string(password_bytestr)
 		err = c.Insert(&user)
 		return err
+	}
+}
+
+func check_login(user User) (User, error) {
+	db, err := mgo.Dial(dbstr)
+	defer db.Close()
+	if err != nil {
+		return User{}, err
+	}
+	c := db.DB("server").C("users")
+	dbresult := new(DbUser)
+	err = c.Find(bson.M{"username": user.Username}).One(dbresult)
+	if err != nil && err.Error() != "not found" {
+		return User{}, err
+	} else if err != nil {
+		return User{}, errors.New("login failed")
+	}
+	if dbresult.Username == user.Username && bcrypt.CompareHashAndPassword(dbresult.Password, []byte(user.Password)) == nil {
+		user.Role = dbresult.Role
+		return user, nil
+	} else {
+		return User{}, errors.New("login failed")
 	}
 }
 
@@ -285,30 +307,21 @@ func post_login(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			http.Error(w, "failed to read form", 500)
 		} else {
-			dbsession, err := mgo.Dial(dbstr)
-			defer dbsession.Close()
-			if err != nil {
-				http.Error(w, "failed to connect to database", 500)
+			account, err := check_login(*result)
+			if err != nil && err.Error() == "login failed" {
+				time.Sleep(3 * time.Second)
+				fmt.Fprintf(w, "invalid username or password")
+			} else if err != nil {
+				http.Error(w, "internal server error", 500)
 			} else {
-				c := dbsession.DB("server").C("users")
-				dbresult := new(DbUser)
-				err = c.Find(bson.M{ "username": result.Username }).One(&dbresult)
-				if err != nil  && err.Error() != "not found" {
-					http.Error(w, "failed to read database", 500)
+				session, err := store.Get(r, "login")
+				if err != nil {
+					http.Error(w, "failed to retrieve session", 500)
 				} else {
-					if dbresult.Username == result.Username && bcrypt.CompareHashAndPassword(dbresult.Password, []byte(result.Password)) == nil {
-						session, err := store.Get(r, "login")
-						if err != nil {
-							http.Error(w, "Failed to retrieve session", 500)
-						}
-						session.Values["username"] = dbresult.Username
-						session.Values["role"] = dbresult.Role
-						session.Save(r, w)
-						http.Redirect(w, r, "/login_get", 302)
-					} else {
-						time.Sleep(time.Second) // Prevents brute-force attacks.  Between this and bcrypt, we should be able to allow weak passwords with relative safety.
-						fmt.Fprintf(w, "Failed to log in")
-					}
+					session.Values["username"] = account.Username
+					session.Values["role"] = account.Role
+					session.Save(r, w)
+					http.Redirect(w, r, "/login_get", 302)
 				}
 			}
 		}
