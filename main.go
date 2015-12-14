@@ -49,6 +49,8 @@ func main() {
 	r.HandleFunc("/login_get", get_login)
 	r.HandleFunc("/create_acct_get", create_account_get)
 	r.HandleFunc("/create_acct", create_account_post)
+	r.HandleFunc("/quizzes", get_all_quizzes)
+	r.HandleFunc("/quiz/{id}", display_quiz)
 	http.Handle("/", r)
 	logstr := fmt.Sprintf("Listening on port %d", PORT)
 	log.Println(logstr)
