@@ -84,11 +84,34 @@ func index(w http.ResponseWriter, r *http.Request) {
 }
 
 func get_all_quizzes(w http.ResponseWriter, r *http.Request) {
-	quizzes := functions.RetrieveQuizzes("")
-	t, _ := template.ParseFiles("templates/all_quizzes.html")
-	err := t.Execute(w, quizzes)
+	quizzes, err := functions.RetrieveQuizzes("")
 	if err != nil {
-		http.Error(w, "failed to execute template", 500)
+		http.Error(w, "failed to retrieve quizzes", 500)
+	} else {
+		t, _ := template.ParseFiles("templates/all_quizzes.html")
+		err = t.Execute(w, quizzes)
+		if err != nil {
+			http.Error(w, "failed to execute template", 500)
+		}
+	}
+}
+
+func display_quiz(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	q_id, ok := vars["id"]
+	if !ok {
+		http.Error(w, "error: page not found--quiz page requires id parameter", 404)
+	} else {
+		quiz, err := functions.RetrieveQuiz(q_id)
+		if err != nil {
+			http.Error(w, "failed to retrieve quiz", 500)
+		} else {
+			t, _ := template.ParseFiles("templates/quiz.html")
+			err = t.Execute(w, quiz)
+			if err != nil {
+				http.Error(w, "failed to execute template", 500)
+			}
+		}
 	}
 }
 
