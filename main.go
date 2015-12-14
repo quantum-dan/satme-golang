@@ -37,56 +37,7 @@ var store = sessions.NewCookieStore([]byte("non-production-a"), []byte("non-prod
 var dbstr = "localhost:27017"									// MongoDB host
 
 /* END VARIABLE DECLARATIONS */
-/* START STRUCT DECLARATIONS */
 
-/* no longer in use 
-type Person struct { // For demo functions
-	Id int
-	Name string
-}
-
-type NameForm struct { // For demo functions
-	Get bool `schema:"-"`
-	Name string `schema:"name"`
-}
- end no longer in use */
-/*
-type User struct { // For logging in.
-	Username string `schema:"username"`
-	Password string `schema:"password"`
-	Role string `schema:"role"`
-	Id int `schema:"id"`  // Not generally used beyond the database but will be useful for deleting users.
-}
-
-type DbUser struct { // Uses []byte password
-	Username string
-	Password []byte
-	Role string
-	Id int
-}
-
-type SuccessLogin struct { // Used to pass information to Create Account
-	Success bool
-	Username string
-	Role string
-	Execute bool
-}
-
-type Question struct { // Quiz question
-	Question string `schema:"question"`
-	Answers []string `schema:"answers"`
-	AnswerChosen string `schema:"answer"`
-	CorrectIndex int `schema:"correct"`
-	Id string `schema:"id"`
-}
-
-type Quiz struct { // Quiz
-	Title string `schema:"title"`
-	Id string `schema:"id"`
-	Questions []Question `schema:"-"`
-}
-
-/* END STRUCT DECLARATIONS */
 /* START MAIN FUNCTION */
 
 func main() {
@@ -129,6 +80,15 @@ func index(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "Error 500: Internal server error.")
 			log.Println("Error: template index.html (func index) failed to execute.")
 		}
+	}
+}
+
+func get_all_quizzes(w http.ResponseWriter, r *http.Request) {
+	quizzes := functions.RetrieveQuizzes("")
+	t, _ := template.ParseFiles("templates/all_quizzes.html")
+	err := t.Execute(w, quizzes)
+	if err != nil {
+		http.Error(w, "failed to execute template", 500)
 	}
 }
 
