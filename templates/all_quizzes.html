@@ -1,1 +1,14 @@
 <!DOCTYPE html>
+<html>
+	<head>
+		<title>Quiz Index</title>
+	</head>
+	<body>
+		<h3>Quizzes</h3>
+		<ul>
+		{{range .}}
+			<li><a href="/quiz/{{.Id}}">{{.Title}}</a></li>
+		{{end}}
+		</ul>
+	</body>
+</html>
