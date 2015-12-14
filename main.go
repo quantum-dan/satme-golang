@@ -6,6 +6,7 @@ package main
 	It uses a MongoDB backend via mgo.v2.
 	This is built in Golang for the combination of rapid development, ease & simplicity of use (vs Yesod), and high concurrent performance
 with Goroutines (green threads).  This may or may not be the production version.
+	The general functions and structs are located in the functions package.  Note that it must be moved to its own directory under $GOPATH/src before compiling.
 */
 
 /* General Notes:
@@ -20,12 +21,13 @@ import (
 	"net/http"			// Basic HTTP library
 	"html/template"			// HTML templates
 	"log"				// Logging to the terminal (for debugging)
-	"gopkg.in/mgo.v2"		// MongoDB driver
-	"gopkg.in/mgo.v2/bson"		// Used to convert to BSON for Mongo
+	// "gopkg.in/mgo.v2"		// MongoDB driver
+	// "gopkg.in/mgo.v2/bson"		// Used to convert to BSON for Mongo
 	"fmt"				// fmt is more or less equivalent to stdio in other languages
-	"golang.org/x/crypto/bcrypt"	// Secure password hashing, more secure for passwords than SHA3
+	// "golang.org/x/crypto/bcrypt"	// Secure password hashing, more secure for passwords than SHA3
 	"time"
-	"errors"
+	// "errors"
+	"functions"
 )
 
 /* START VARIABLE DECLARATIONS */
@@ -48,7 +50,7 @@ type NameForm struct { // For demo functions
 	Name string `schema:"name"`
 }
  end no longer in use */
-
+/*
 type User struct { // For logging in.
 	Username string `schema:"username"`
 	Password string `schema:"password"`
@@ -108,7 +110,7 @@ func main() {
 
 /* END MAIN FUNCTION */
 /* START GENERAL FUNCTIONS */
-
+/*
 func retrieve_quiz(target string) (Quiz, error) {
 	// Retrieves quiz with the given ID
 	db, err := mgo.Dial(dbstr)
@@ -249,7 +251,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 
 func create_account_get(w http.ResponseWriter, r *http.Request) {
 	t, err := template.ParseFiles("templates/acct_created.html")
-	err = t.Execute(w, SuccessLogin{ false, "", "", false})
+	err = t.Execute(w, functions.SuccessLogin{ false, "", "", false})
 	if err != nil {
 		http.Error(w, "failed to execute template", 500)
 	}
@@ -262,7 +264,7 @@ func create_account_post(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "failed to parse form", 500)
 	} else {
-		result := new(User)
+		result := new(functions.User)
 		err = decoder.Decode(result, r.PostForm)
 		if err != nil {
 			http.Error(w, "failed to read form", 500)
@@ -276,16 +278,16 @@ func create_account_post(w http.ResponseWriter, r *http.Request) {
 					result.Role = "user"
 				}
 				t, _ := template.ParseFiles("templates/acct_created.html")
-				err = create_account(*result)
+				err = functions.CreateAccount(*result)
 				if err != nil && err.Error() == "user already exists" {
-					err = t.Execute(w, SuccessLogin{false, result.Username, "", true})
+					err = t.Execute(w, functions.SuccessLogin{false, result.Username, "", true})
 					if err != nil {
 						http.Error(w, "failed to execute template", 500)
 					}
 				} else if err != nil {
 					http.Error(w, "internal server error", 500)
 				} else {
-					err = t.Execute(w, SuccessLogin{true, result.Username, result.Role, true})
+					err = t.Execute(w, functions.SuccessLogin{true, result.Username, result.Role, true})
 					if err != nil {
 						http.Error(w, "failed to execute template", 500)
 					}
@@ -297,17 +299,16 @@ func create_account_post(w http.ResponseWriter, r *http.Request) {
 
 func post_login(w http.ResponseWriter, r *http.Request) {
 	// Handles login requests.  Currently set up for plaintext passwords.
-	// Does not yet use sessions.  That's the next thing to be added.
 	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, "failed to parse form", 500)
 	} else {
-		result := new(User)
+		result := new(functions.User)
 		err = decoder.Decode(result, r.PostForm)
 		if err != nil {
 			http.Error(w, "failed to read form", 500)
 		} else {
-			account, err := check_login(*result)
+			account, err := functions.CheckLogin(*result)
 			if err != nil && err.Error() == "login failed" {
 				time.Sleep(3 * time.Second)
 				fmt.Fprintf(w, "invalid username or password")
