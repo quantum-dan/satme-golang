@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<title>Quiz: {{.Title}}</title>
-	</head>
-	<body>
-		{{range .Questions}}
-			<p>{{.Question}}
-				<ul>{{range .Answers}}
-					<li>{{.}}</li>
-				{{end}}</ul>
-			</p>
+<head>
+	<title>Quiz: {{.Title}}</title>
+</head>
+<body>
+	<form method=POST action="/grade/{{.Id}}">
+		<h2>Quiz: {{.Title}}</h2>
+		{{range $q := .Questions}}
+			<h4>{{$q.Question.Question}}</h4>
+			<p>{{range $q.Question.Answers}}
+				<input type=radio name="Questions.{{$q.Index}}.answer" value="{{.}}">{{.}}</input><br />
+			{{end}}</p>
 		{{end}}
+		<input type=submit value="Submit" />
+	</form>
 	<p><a href="/">Home</a> <a href="/quizzes">All Quizzes</a></p>
-	</body>
+</body>
 </html>

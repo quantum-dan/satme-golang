@@ -47,9 +47,30 @@ type Quiz struct { // Quiz
         Questions []Question `schema:"questions" bson:"questions"`
 }
 
+type QuizId struct { // For TmplQuiz
+	Question Question
+	Index int
+}
+
+type TmplQuiz struct { // Quiz for templates
+	Id string
+	Title string
+	Questions []QuizId
+}
+
 type DbQuiz struct { // Quiz without ID
 	Title string `bson:"title"`
 	Questions []Question `bson:"questions"`
+}
+
+func (quiz Quiz) GetTmplQuiz() TmplQuiz {
+	result := *new(TmplQuiz)
+	result.Id = quiz.Id
+	result.Title = quiz.Title
+	for i := 0; i < len(quiz.Questions); i++ {
+		result.Questions = append(result.Questions, QuizId{quiz.Questions[i], i})
+	}
+	return result
 }
 
 func NewQuiz(title string) DbQuiz {
@@ -143,12 +164,16 @@ func (quiz Quiz) Grade() (float32, error) {
                 return 0.0, err
         }
         var sum float32 = 0.0
-        var total float32 = float32(len(quiz.Questions))
+        var total float32 = 0.0
         for i := 0; i < len(quiz.Questions); i++ {
                 if quiz.Questions[i].AnswerChosen == compare.Questions[i].Answers[compare.Questions[i].CorrectIndex] {
                         sum += 1.0
                 }
+		total += 1.0
         }
+	if total == 0.0 {
+		return 0, nil
+	}
         return sum * 100 / total, nil
 }
 

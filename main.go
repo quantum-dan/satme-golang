@@ -51,6 +51,7 @@ func main() {
 	r.HandleFunc("/create_acct", create_account_post)
 	r.HandleFunc("/quizzes", get_all_quizzes)
 	r.HandleFunc("/quiz/{id}", display_quiz)
+	r.HandleFunc("/grade/{id}", grade_quiz)
 	http.Handle("/", r)
 	logstr := fmt.Sprintf("Listening on port %d", PORT)
 	log.Println(logstr)
@@ -86,7 +87,32 @@ func index(w http.ResponseWriter, r *http.Request) {
 }
 
 func grade_quiz(w http.ResponseWriter, r *http.Request) {
-	
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, "failed to parse form", 500)
+	} else {
+		vars := mux.Vars(r)
+		id, ok := vars["id"]
+		if !ok {
+			http.Error(w, "missing GET parameters", 404)
+		} else {
+			quiz := new(functions.Quiz)
+			err = decoder.Decode(quiz, r.PostForm)
+			if err != nil {
+				http.Error(w, "failed to read form", 500)
+				log.Println(err)
+			} else {
+				quiz.Id = id
+				grade, err := quiz.Grade()
+				if err != nil {
+					http.Error(w, "failed to grade quiz", 500)
+				} else {
+					fmt.Fprintf(w, "Your grade is: %f%%", grade)
+				}
+			}
+		}
+	}
+}
 
 func get_all_quizzes(w http.ResponseWriter, r *http.Request) {
 	quizzes, err := functions.RetrieveQuizzes("")
@@ -111,10 +137,14 @@ func display_quiz(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			http.Error(w, "failed to retrieve quiz", 500)
 		} else {
-			t, _ := template.ParseFiles("templates/quiz.html")
-			err = t.Execute(w, quiz)
+			t, err := template.ParseFiles("templates/quiz.html")
 			if err != nil {
-				http.Error(w, "failed to execute template", 500)
+				log.Println(err)
+			} else {
+				err = t.Execute(w, quiz.GetTmplQuiz())
+				if err != nil {
+					http.Error(w, "failed to execute template", 500)
+				}
 			}
 		}
 	}
