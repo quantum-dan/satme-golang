@@ -5,7 +5,12 @@
 	</head>
 	<body>
 		{{range .Questions}}
-			<p>{{.Question}}</p>
+			<p>{{.Question}}
+				<ul>{{range .Answers}}
+					<li>{{.}}</li>
+				{{end}}</ul>
+			</p>
 		{{end}}
+	<p><a href="/">Home</a> <a href="/quizzes">All Quizzes</a></p>
 	</body>
 </html>

@@ -44,7 +44,7 @@ type Question struct { // Quiz question
 type Quiz struct { // Quiz
         Id string `schema:"id" bson:"_id"`
         Title string `schema:"title" bson:"title"`
-        Questions []Question `schema:"-" bson:"questions"`
+        Questions []Question `schema:"questions" bson:"questions"`
 }
 
 type DbQuiz struct { // Quiz without ID

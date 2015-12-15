@@ -52,25 +52,12 @@ func main() {
 	r.HandleFunc("/quizzes", get_all_quizzes)
 	r.HandleFunc("/quiz/{id}", display_quiz)
 	http.Handle("/", r)
-	test()
 	logstr := fmt.Sprintf("Listening on port %d", PORT)
 	log.Println(logstr)
 	portstr := fmt.Sprintf(":%d", PORT)
 	err := http.ListenAndServe(portstr, nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
-	}
-}
-
-func test() {
-	quiz := functions.NewQuiz("questions test")
-	quiz.Questions = []functions.Question {
-		functions.NewQuestion("What is 1+1?", []string{"1", "2", "3", "4"}, 1),
-		functions.NewQuestion("What is 2^3?", []string{"0", "2", "9999", "8"}, 3),
-		}
-	err := functions.InsertQuiz(quiz)
-	if err != nil {
-		log.Println(err)
 	}
 }
 
@@ -97,6 +84,9 @@ func index(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
+
+func grade_quiz(w http.ResponseWriter, r *http.Request) {
+	
 
 func get_all_quizzes(w http.ResponseWriter, r *http.Request) {
 	quizzes, err := functions.RetrieveQuizzes("")
