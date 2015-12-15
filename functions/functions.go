@@ -13,17 +13,17 @@ import (
 var dbstr = "localhost:27017"
 
 type User struct { // For logging in.
-        Username string `schema:"username"`
-        Password string `schema:"password"`
-        Role string `schema:"role"`
-        Id int `schema:"id"`  // Not generally used beyond the database but will be useful for deleting users.
+        Username string `schema:"username" bson:"username"`
+        Password string `schema:"password" bson:"password"`
+        Role string `schema:"role" bson:"role"`
+        Id int `schema:"id" bson:"_id"`  // Not generally used beyond the database but will be useful for deleting users.
 }
 
 type DbUser struct { // Uses []byte password
-        Username string
-        Password []byte
-        Role string
-        Id int
+        Username string `bson:"username"`
+        Password []byte `bson:"password"`
+        Role string `bson:"role"`
+        Id int `bson:"_id"`
 }
 
 type SuccessLogin struct { // Used to pass information to Create Account
@@ -34,17 +34,22 @@ type SuccessLogin struct { // Used to pass information to Create Account
 }
 
 type Question struct { // Quiz question
-        Question string `schema:"question"`
-        Answers []string `schema:"answers"`
+        Question string `schema:"question" bson:"question"`
+        Answers []string `schema:"answers" bson:"answers"`
         AnswerChosen string `schema:"answer"`
-        CorrectIndex int `schema:"correct"`
-        Id string `schema:"id"`
+        CorrectIndex int `schema:"correct" bson:"correct"`
+        Id string `schema:"id" bson:"_id"`
 }
 
 type Quiz struct { // Quiz
-        Title string `schema:"title"`
-        Id string `schema:"id"`
-        Questions []Question `schema:"-"`
+        Id string `schema:"id" bson:"_id"`
+        Title string `schema:"title" bson:"title"`
+        Questions []Question `schema:"-" bson:"questions"`
+}
+
+type DbQuiz struct { // Quiz without ID
+	Title string `bson:"title"`
+	Questions []Question `bson:"questions"`
 }
 
 func RetrieveQuiz(target string) (Quiz, error) {
@@ -63,7 +68,7 @@ func RetrieveQuiz(target string) (Quiz, error) {
         return *result, nil
 }
 
-func InsertQuiz(quiz Quiz) error {
+func InsertQuiz(quiz DbQuiz) error {
         db, err := mgo.Dial(dbstr)
         defer db.Close()
         if err != nil {
@@ -75,7 +80,7 @@ func InsertQuiz(quiz Quiz) error {
 }
 
 func RetrieveQuizzes(title string) ([]Quiz, error) {
-        // Retrieves all quizes from the database
+        // Retrieves all quizzes from the database
         db, err := mgo.Dial(dbstr)
         defer db.Close()
         if err != nil {
