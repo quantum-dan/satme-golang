@@ -4,8 +4,8 @@
 		<title>Quiz: {{.Title}}</title>
 	</head>
 	<body>
-		<form method=POST action="/grade/{{.Id}}">
-			
-		</form>
+		{{range .Questions}}
+			<p>{{.Question}}</p>
+		{{end}}
 	</body>
 </html>
