@@ -52,6 +52,14 @@ type DbQuiz struct { // Quiz without ID
 	Questions []Question `bson:"questions"`
 }
 
+func NewQuiz(title string) DbQuiz {
+	return DbQuiz {title, []Question{}}
+}
+
+func NewQuestion(question string, answers []string, correct int) {
+	return Question { Question: question, Answers: answers, CorrectIndex: correct}
+}
+
 func RetrieveQuiz(target string) (Quiz, error) {
         // Retrieves quiz with the given ID
         db, err := mgo.Dial(dbstr)
@@ -66,6 +74,26 @@ func RetrieveQuiz(target string) (Quiz, error) {
                 return *new(Quiz), err
         }
         return *result, nil
+}
+
+func UpdateQuiz(quiz Quiz) error {
+	db, err := mgo.Dial(dbstr)
+	defer db.Close()
+	if err != nil {
+		return err
+	}
+	c = db.DB("server").C("quiz")
+	err = c.Update(bson.M{"_id": bson.ObjectId(quiz.Id)}, &quiz)
+	return err
+}
+
+func AddQuestion (id string, question Question) error {
+	quiz, err := RetrieveQuiz(id)
+	if err != nil {
+		return err
+	}
+	quiz.Questions = append(quiz.Questions, question)
+	UpdateQuiz(quiz)
 }
 
 func InsertQuiz(quiz DbQuiz) error {

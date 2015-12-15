@@ -61,29 +61,6 @@ func main() {
 	}
 }
 
-func test() {
-	quiz := new(functions.DbQuiz)
-	quiz.Title = "test quiz"
-	quiz.Questions = []functions.Question{}
-	quiz.Questions = append(quiz.Questions, functions.Question {
-		Question: "What is 1 + 1?",
-		Answers: []string{ "1", "2", "3", "0"},
-		CorrectIndex: 1,
-		})
-	quiz.Questions = append(quiz.Questions, functions.Question {
-		Question: "What is 2 to the 3 power?",
-		Answers: []string{ "6", "9", "8", "5" },
-		CorrectIndex: 2,
-		})
-	err := functions.InsertQuiz(*quiz)
-	if err != nil {
-		log.Println(err)
-	}
-}
-
-func test2() {
-	:
-
 /* END MAIN FUNCTION */
 
 /* START ROUTING FUNCTIONS */
