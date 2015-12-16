@@ -52,6 +52,7 @@ func main() {
 	r.HandleFunc("/quizzes", get_all_quizzes)
 	r.HandleFunc("/quiz/{id}", display_quiz)
 	r.HandleFunc("/grade/{id}", grade_quiz)
+	r.HandleFunc("/score", view_score)
 	http.Handle("/", r)
 	logstr := fmt.Sprintf("Listening on port %d", PORT)
 	log.Println(logstr)
@@ -107,7 +108,41 @@ func grade_quiz(w http.ResponseWriter, r *http.Request) {
 				if err != nil {
 					http.Error(w, "failed to grade quiz", 500)
 				} else {
+					session, err := store.Get(r, "login")
+					if err == nil {
+						login, ok := session.Values["username"]
+						if ok {
+							username, ok := login.(string)
+							if ok {
+								functions.UpdateScoreUsername(username, grade)
+							}
+						}
+					}
 					fmt.Fprintf(w, "Your grade is: %f%%", grade)
+				}
+			}
+		}
+	}
+}
+
+func view_score(w http.ResponseWriter, r *http.Request) {
+	session, err := store.Get(r, "login")
+	if err != nil {
+		http.Error(w, "failed to retrieve session", 500)
+	} else {
+		login, ok := session.Values["username"]
+		if !ok {
+			http.Error(w, "You are not logged in", 500)
+		} else {
+			username, ok := login.(string)
+			if !ok {
+				http.Error(w, "internal server error", 500)
+			} else {
+				user, err := functions.GetUser(username)
+				if err != nil {
+					http.Error(w, "failed to retrieve user data", 500)
+				} else {
+					fmt.Fprintf(w, "Your maximum score is %s%%", user.MaxScore)
 				}
 			}
 		}
@@ -187,6 +222,7 @@ func create_account_post(w http.ResponseWriter, r *http.Request) {
 					}
 				} else if err != nil {
 					http.Error(w, "internal server error", 500)
+					log.Println(err)
 				} else {
 					err = t.Execute(w, functions.SuccessLogin{true, result.Username, result.Role, true})
 					if err != nil {
