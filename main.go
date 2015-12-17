@@ -87,6 +87,54 @@ func index(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func create_quiz(w http.ResponseWriter, r *http.Request) {
+	session, err := store.Get(r, "login")
+	if err != nil {
+		http.Error(w, "failed to retrieve session", 500)
+	} else {
+		role, ok := session.Values["role"].(string)
+		if !ok || (role != "su" && role != "admin") {
+			http.Error(w, "failed to verify admin privileges.  are you logged in?", 500)
+		} else {
+			err = r.ParseForm()
+			if err != nil {
+				http.Error(w, "failed to parse form", 500)
+			} else {
+				quiz := new(functions.Quiz)
+				err = decoder.Decode(quiz, r.PostForm)
+				if err != nil {
+					http.Error(w, "failed to read form", 500)
+				} else {
+					err = functions.InsertQuiz(functions.DbQuiz {quiz.Title, quiz.Questions})
+					if err != nil {
+						http.Error(w, "failed to insert quiz", 500)
+					} else {
+						fmt.Fprintf(w, "Successfully created quiz")
+					} 
+				}
+			}
+		}
+	}
+}
+
+func admin_panel(w http.ResponseWriter, r *http.Request) {
+	session, err := store.Get(r, "login")
+	if err != nil {
+		http.Error(w, "failed to retrieve session", 500)
+	} else {
+		role, ok := session.Values["role"].(string)
+		if !ok || (role != "su" && role != "admin") {
+			http.Error(w, "failed to verify admin privileges.  are you logged in?", 500)
+		} else {
+			t, _ := template.ParseFiles("templates/admin.html")
+			err := t.Execute(w, nil)
+			if err != nil {
+				http.Error(w, "failed to execute template", 500)
+			}
+		}
+	}
+}
+
 func grade_quiz(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
@@ -142,7 +190,7 @@ func view_score(w http.ResponseWriter, r *http.Request) {
 				if err != nil {
 					http.Error(w, "failed to retrieve user data", 500)
 				} else {
-					fmt.Fprintf(w, "Your maximum score is %s%%", user.MaxScore)
+					fmt.Fprintf(w, "Your maximum score is %f%%", user.MaxScore)
 				}
 			}
 		}

@@ -1,2 +1,2 @@
 #! /bin/sh
-daemon -f -p ./pid ./server
+daemon -f -p ./pid ./server 
