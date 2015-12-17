@@ -9,13 +9,13 @@
 		<h3>Create a Quiz</h3>
 		<input type=text name="title" placeholder="Title" /><br />
 		<div id="questions">
-			<input type=text name="questions.0.question" placeholder="Question 1 Text" /><br />
-			<input type=text name="questions.0.answers.0" placeholder="Answer 1" /><br />
-			<input type=text name="questions.0.answers.1" placeholder="Answer 2" /><br />
-			<input type=text name="questions.0.answers.2" placeholder="Answer 3" /><br />
-			<input type=text name="questions.0.answers.3" placeholder="Answer 4" /><br />
-			<label for="correct">Which answer is correct? </label>
-			<select name="correct"><option value=0>1</option><option value=1>2</option><option value=2>3</option><option value=3>4</option></select><br />
+			<input type=text name="Questions.0.Question" placeholder="Question 1 Text" /><br />
+			<input type=text name="Questions.0.Answers.0" placeholder="Answer 1" /><br />
+			<input type=text name="Questions.0.Answers.1" placeholder="Answer 2" /><br />
+			<input type=text name="Questions.0.Answers.2" placeholder="Answer 3" /><br />
+			<input type=text name="Questions.0.Answers.3" placeholder="Answer 4" /><br />
+			<label for="Questions.0.correct">Which answer is correct? </label>
+			<select name="Questions.0.correct"><option value=0>1</option><option value=1>2</option><option value=2>3</option><option value=3>4</option></select><br />
 		</div>
 		<p><input type=button value="Add Question" onclick=addq() /></p>
 		<input type=submit value="Create Quiz" />

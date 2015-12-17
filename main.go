@@ -53,6 +53,8 @@ func main() {
 	r.HandleFunc("/quiz/{id}", display_quiz)
 	r.HandleFunc("/grade/{id}", grade_quiz)
 	r.HandleFunc("/score", view_score)
+	r.HandleFunc("/admin", admin_panel)
+	r.HandleFunc("/create_quiz", create_quiz)
 	http.Handle("/", r)
 	logstr := fmt.Sprintf("Listening on port %d", PORT)
 	log.Println(logstr)
@@ -104,6 +106,7 @@ func create_quiz(w http.ResponseWriter, r *http.Request) {
 				err = decoder.Decode(quiz, r.PostForm)
 				if err != nil {
 					http.Error(w, "failed to read form", 500)
+					log.Println(err)
 				} else {
 					err = functions.InsertQuiz(functions.DbQuiz {quiz.Title, quiz.Questions})
 					if err != nil {
