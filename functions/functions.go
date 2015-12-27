@@ -10,7 +10,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var dbstr = "localhost:27017"
+var dbstr = "127.0.0.1:27017"
 
 type User struct { // For logging in.
         Username string `schema:"username" bson:"username"`
@@ -33,6 +33,21 @@ type Question struct { // Quiz question
         AnswerChosen string `schema:"answer"`
         CorrectIndex int `schema:"correct" bson:"correct"`
         Id string `schema:"id" bson:"_id"`
+}
+
+type PostQuestion struct { // for adding question
+	Title string `schema:"quiz"`
+	Question string `schema:"question"`
+	Answers []string `schema:"answers"`
+	CorrectIndex int `schema:"correct"`
+}
+
+func (question PostQuestion) GetQuestion() Question {
+	return Question {
+		Question: question.Question,
+		Answers: question.Answers,
+		CorrectIndex: question.CorrectIndex,
+	}
 }
 
 type Quiz struct { // Quiz
