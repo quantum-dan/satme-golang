@@ -55,6 +55,7 @@ func main() {
 	r.HandleFunc("/score", view_score)
 	r.HandleFunc("/admin", admin_panel)
 	r.HandleFunc("/create_quiz", create_quiz)
+	r.HandleFunc("/add_question", add_question)
 	http.Handle("/", r)
 	logstr := fmt.Sprintf("Listening on port %d", PORT)
 	log.Println(logstr)
@@ -108,12 +109,52 @@ func create_quiz(w http.ResponseWriter, r *http.Request) {
 					http.Error(w, "failed to read form", 500)
 					log.Println(err)
 				} else {
+					quiz.Questions = []functions.Question{}
 					err = functions.InsertQuiz(functions.DbQuiz {quiz.Title, quiz.Questions})
 					if err != nil {
 						http.Error(w, "failed to insert quiz", 500)
 					} else {
 						fmt.Fprintf(w, "Successfully created quiz")
-					} 
+					}
+				}
+			}
+		}
+	}
+}
+
+func add_question(w http.ResponseWriter, r *http.Request) {
+	session, err := store.Get(r, "login")
+	if err != nil {
+		http.Error(w, "failed to retrieve session", 500)
+	} else {
+		role, ok := session.Values["role"].(string)
+		if !ok || (role != "su" && role != "admin") {
+			http.Error(w, "failed to verify admin privileges.  are you logged in?", 500)
+		} else {
+			err = r.ParseForm()
+			if err != nil {
+				http.Error(w, "failed to parse form", 500)
+			} else {
+				question := new(functions.PostQuestion)
+				err = decoder.Decode(question, r.PostForm)
+				if err != nil {
+					http.Error(w, "failed to read form", 500)
+					log.Println(err)
+				} else {
+					quiz, err := functions.RetrieveQuiz(question.Title)
+					if err != nil {
+						http.Error(w, "failed to retrieve quiz", 500)
+						log.Println(err)
+					} else {
+						quiz.Questions = append(quiz.Questions, (*question).GetQuestion())
+						err = functions.UpdateQuiz(quiz)
+						if err != nil {
+							http.Error(w, "failed to update quiz", 500)
+							log.Println(err)
+						} else {
+							http.Redirect(w, r, "/admin", 302)
+						}
+					}
 				}
 			}
 		}
@@ -129,10 +170,16 @@ func admin_panel(w http.ResponseWriter, r *http.Request) {
 		if !ok || (role != "su" && role != "admin") {
 			http.Error(w, "failed to verify admin privileges.  are you logged in?", 500)
 		} else {
-			t, _ := template.ParseFiles("templates/admin.html")
-			err := t.Execute(w, nil)
+			quizzes, err := functions.RetrieveQuizzes("")
 			if err != nil {
-				http.Error(w, "failed to execute template", 500)
+				http.Error(w, "failed to retrieve quizzes", 500)
+				log.Println(err)
+			} else {
+				t, _ := template.ParseFiles("templates/admin.html")
+				err := t.Execute(w, quizzes)
+				if err != nil {
+					http.Error(w, "failed to execute template", 500)
+				}
 			}
 		}
 	}
