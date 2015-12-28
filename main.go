@@ -176,7 +176,11 @@ func admin_panel(w http.ResponseWriter, r *http.Request) {
 				log.Println(err)
 			} else {
 				t, _ := template.ParseFiles("templates/admin.html")
-				err := t.Execute(w, quizzes)
+				newQuizzes := []functions.TmplQuiz{}
+				for i := 0; i < len(quizzes); i++ {
+					newQuizzes = append(newQuizzes, quizzes[i].GetTmplQuiz())
+				}
+				err := t.Execute(w, newQuizzes)
 				if err != nil {
 					http.Error(w, "failed to execute template", 500)
 				}
@@ -277,6 +281,7 @@ func display_quiz(w http.ResponseWriter, r *http.Request) {
 				err = t.Execute(w, quiz.GetTmplQuiz())
 				if err != nil {
 					http.Error(w, "failed to execute template", 500)
+					log.Println(err)
 				}
 			}
 		}

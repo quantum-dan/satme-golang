@@ -14,14 +14,14 @@
 		<h3>Add a Question</h3>
 		<label for="quiz">Which quiz are you adding to?</label>
 		<select name="quiz">{{range .}}
-			<option value="{{.Title}}">{{.Title}}</option>
+			<option value="{{.Id}}">{{.Title}}</option>
 			{{end}}
 		</select><br />
 		<input type=text name="question" placeholder="Question" /><br />
-		<input type=text name="Answers.0" placeholder="Answer 1" /><br />
-		<input type=text name="Answers.1" placeholder="Answer 2" /><br />
-		<input type=text name="Answers.2" placeholder="Answer 3" /><br />
-		<input type=text name="Answers.3" placeholder="Answer 4" /><br />
+		<input type=text name="answers" placeholder="Answer 1" /><br />
+		<input type=text name="answers" placeholder="Answer 2" /><br />
+		<input type=text name="answers" placeholder="Answer 3" /><br />
+		<input type=text name="answers" placeholder="Answer 4" /><br />
 		<label for="correct">Which answer is correct?</label>
 		<select name="correct">
 			<option value=0>1</option>
