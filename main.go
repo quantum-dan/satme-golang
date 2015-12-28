@@ -55,6 +55,7 @@ func main() {
 	r.HandleFunc("/score", view_score)
 	r.HandleFunc("/admin", admin_panel)
 	r.HandleFunc("/create_quiz", create_quiz)
+	r.HandleFunc("/addq/{id}", addq_menu)
 	r.HandleFunc("/add_question", add_question)
 	http.Handle("/", r)
 	logstr := fmt.Sprintf("Listening on port %d", PORT)
@@ -115,6 +116,35 @@ func create_quiz(w http.ResponseWriter, r *http.Request) {
 						http.Error(w, "failed to insert quiz", 500)
 					} else {
 						fmt.Fprintf(w, "Successfully created quiz")
+					}
+				}
+			}
+		}
+	}
+}
+
+func addq_menu(w http.ResponseWriter, r *http.Request) {
+	// Menu to add questions to a specific quiz.  It's a workaround for some bugs--not ideal, but hopefully it works.
+	session, err := store.Get(r, "login")
+	if err != nil {
+		http.Error(w, "failed to retrieve session", 500)
+	} else {
+		role, ok := session.Values["role"].(string)
+		if !ok || (role != "su" && role != "admin") {
+			http.Error(w, "failed to verify admin privileges.  are you logged in?", 500)
+		} else {
+			t, _ := template.ParseFiles("templates/addq.html")
+			id, ok := mux.Vars(r)["id"]
+			if !ok {
+				http.Error(w, "failed to retrieve GET parameter", 500)
+			} else {
+				quiz, err := functions.RetrieveQuiz(id)
+				if err != nil {
+					http.Error(w, "failed to read quiz", 500)
+				} else {
+					err = t.Execute(w, quiz)
+					if err != nil {
+						http.Error(w, "failed to execute template", 500)
 					}
 				}
 			}
