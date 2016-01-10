@@ -29,6 +29,3 @@ Documentation for the libraries used:
 * bcrypt (password hashing): https://godoc.org/golang.org/x/crypto/bcrypt
 * Gorilla (web toolkit): http://www.gorillatoolkit.org/
 * mgo (MongoDB driver): https://labix.org/mgo
-
-### Note on Licensing
-For the purpose of general uses the license is an unrestricted open-source license based on the MIT License.  However, in the case of commercial derivatives, source code must be available to purchasers/customers (not necessarily to the general public), and derivatives may not have a proprietary license.
