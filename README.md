@@ -1,3 +1,6 @@
+***NOTE***
+There will be no further work on this code, as the project in question has been cancelled.
+
 # satme
 SATme platform.  This version is written in Golang and currently not being used for production.
 
